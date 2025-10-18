@@ -1,0 +1,56 @@
+:root{
+  --bg-1: #05021a;
+  --bg-2: #07102b;
+  --card: rgba(12,18,31,0.6);
+  --accent: #7dd3fc;
+  --accent-2: #a78bfa;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%;}
+body{
+  margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(30,40,80,0.18), transparent), linear-gradient(180deg,var(--bg-1), var(--bg-2));
+  color:#e6eef8; -webkit-font-smoothing:antialiased;
+}
+
+.app-root{min-height:100vh; display:flex; flex-direction:column; align-items:stretch}
+.app-header{padding:28px 28px 8px 28px; text-align:center}
+.logo{font-size:28px; margin:0; letter-spacing:1px}
+.tag{margin:6px 0 0; color:#bcd7ff88}
+
+.app-main{flex:1; display:flex; align-items:center; justify-content:center; padding:28px}
+.app-footer{padding:12px; text-align:center; color:#9fb6df66}
+
+.center-card{width:min(880px,92%); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:28px; border-radius:14px; box-shadow:0 6px 30px rgba(0,0,0,0.45); backdrop-filter: blur(6px)}
+
+.primary-btn{background:linear-gradient(90deg,var(--accent), var(--accent-2)); color:#031029; border:none; padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer}
+.ghost-btn{background:transparent; color:#cfe8ff; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:8px; cursor:pointer}
+.muted{color:#bcd7ff88}
+
+.upload-area{text-align:center}
+.cosmic-hint{margin-top:18px; color:#a6c7ff66}
+
+.loading-wrap{text-align:center}
+.loading-bar{width:100%; height:18px; background:rgba(255,255,255,0.04); border-radius:12px; overflow:hidden; margin-top:12px}
+.loading-fill{height:100%; width:0%; background:linear-gradient(90deg, rgba(125,211,252,0.9), rgba(167,139,250,0.9)); box-shadow:0 6px 18px rgba(124,58,237,0.12); transition:width 360ms linear}
+.progress-number{margin-top:8px; font-weight:700}
+
+.images-row{display:flex; gap:18px; margin-top:16px; justify-content:center; flex-wrap:wrap}
+.images-row figure{width:340px; margin:0}
+.images-row img{width:100%; height:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.04)}
+.img-placeholder{height:220px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.02); border-radius:8px}
+
+.stat-card{margin-top:18px; padding:14px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); display:inline-block}
+.stat-label{color:#bcd7ffbb}
+.stat-value{font-size:26px; font-weight:800}
+
+/* moving stars background */
+.starfield{position:fixed; inset:0; pointer-events:none; z-index:-1; background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 80% 40%, rgba(255,255,255,0.65), transparent); opacity:0.6; animation: drift 60s linear infinite}
+@keyframes drift{ from {transform: translateY(0)} to {transform: translateY(-60px)} }
+
+/* responsive tweaks */
+@media (max-width:760px){ .images-row figure{width:280px} }
+
+/* small decorative glow */
+.center-card::after{content:''; position:absolute; left:50%; top:16%; width:520px; height:520px; transform:translateX(-50%); background:radial-gradient(circle, rgba(125,211,252,0.06), transparent 30%); filter:blur(40px); z-index:-2}
