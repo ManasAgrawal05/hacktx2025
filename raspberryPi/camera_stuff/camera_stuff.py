@@ -1,0 +1,1 @@
+"""Get images from camera using openCV"""
