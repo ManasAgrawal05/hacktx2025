@@ -45,9 +45,18 @@ body{
 .stat-label{color:#bcd7ffbb}
 .stat-value{font-size:26px; font-weight:800}
 
-/* moving stars background */
-.starfield{position:fixed; inset:0; pointer-events:none; z-index:-1; background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 80% 40%, rgba(255,255,255,0.65), transparent); opacity:0.6; animation: drift 60s linear infinite}
-@keyframes drift{ from {transform: translateY(0)} to {transform: translateY(-60px)} }
+
+
+@keyframes drift {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(var(--dx, 1px), var(--dy, 1px)); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
 
 /* responsive tweaks */
 @media (max-width:760px){ .images-row figure{width:280px} }
