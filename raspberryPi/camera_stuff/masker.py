@@ -66,7 +66,7 @@ class Masker:
         return Image.fromarray(diff_enhanced, mode="L")
     
     # FOR EXTERNAL USAGE
-    def get_clean_image(self):
+    def get_clean_image(self, image_path="processed_face.jpg"):
         """
         Capture and return a clean (un-noised) image.
         
@@ -83,7 +83,7 @@ class Masker:
         return Image.open(self.image_path)
 
     # FOR EXTERNAL USAGE
-    def get_dirty_image(self):
+    def get_dirty_image(self, overlay_image_path="overlay_output.jpg"):
         """
         Capture an image and apply noise overlay.
 
@@ -99,6 +99,7 @@ class Masker:
         # Apply overlay
         overlay_img = self.generate_overlay(base_img, noise_tensor)
         print("[info] Generated dirty (overlayed) image")
+        overlay_img.save(self.overlay_output_path)
 
         return overlay_img
     
