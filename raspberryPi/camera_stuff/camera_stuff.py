@@ -19,7 +19,6 @@ class Camera:
 
     def capture_image(self):
         cap = cv2.VideoCapture(0)
-
         if not cap.isOpened():
             raise RuntimeError("Could not open webcam")
 
@@ -28,7 +27,6 @@ class Camera:
 
         ret, frame = cap.read()
         cap.release()
-
         if not ret:
             raise RuntimeError("Failed to capture image from webcam")
 
@@ -39,7 +37,17 @@ class Camera:
         return jpeg.tobytes()
 
     def process_image(self, image_bytes):
-        # Decode JPEG bytes to OpenCV image
+        """Legacy interface: just return processed cropped face bytes."""
+        processed_bytes, _ = self.process_image_with_bbox(image_bytes)
+        return processed_bytes
+
+    def process_image_with_bbox(self, image_bytes):
+        """
+        Decode, detect, crop the largest face, and return both:
+          - processed face JPEG bytes
+          - bounding box of detected face (x, y, w, h) in original frame
+        """
+        # Decode JPEG bytes
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is None:
@@ -47,7 +55,6 @@ class Camera:
 
         # Detect faces using DNN
         faces = self.detect_faces_dnn(img)
-
         if not faces:
             raise RuntimeError("No faces detected in the image")
 
@@ -64,7 +71,7 @@ class Camera:
         if not ret:
             raise RuntimeError("Failed to encode processed image to JPEG")
 
-        return processed_jpeg.tobytes()
+        return processed_jpeg.tobytes(), largest_face  # return both bytes and bbox
 
     def detect_faces_dnn(self, image):
         h, w = image.shape[:2]
@@ -162,13 +169,12 @@ if __name__ == "__main__":
     camera = Camera()
 
     jpeg_bytes = camera.capture_image()
-    processed_jpeg = camera.process_image(jpeg_bytes)
+    processed_jpeg, bbox = camera.process_image_with_bbox(jpeg_bytes)
 
-    # Optionally save both images
     with open("original.jpg", "wb") as f:
         f.write(jpeg_bytes)
-
     with open("processed_face.jpg", "wb") as f:
         f.write(processed_jpeg)
 
     print("Images saved: original.jpg and processed_face.jpg")
+    print(f"Detected bounding box: {bbox}")
