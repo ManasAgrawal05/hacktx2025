@@ -9,9 +9,11 @@ Usage:
 
 import sys
 import wormhole
-from wormhole.cli import public_relay
 import threading
 import time
+
+# Public relay server
+RELAY_URL = "ws://relay.magic-wormhole.io:4000/v1"
 
 
 def send_messages(endpoint, name):
@@ -53,7 +55,7 @@ def run_wormhole(code=None):
     # Create wormhole with public relay
     w = wormhole.create(
         appid="example.com/wormhole-test",
-        relay_url=public_relay.RENDEZVOUS_RELAY,
+        relay_url=RELAY_URL,
         reactor=None  # Use default reactor
     )
 
