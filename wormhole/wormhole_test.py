@@ -19,61 +19,84 @@ RELAY_URL = "ws://relay.magic-wormhole.io:4000/v1"
 
 @defer.inlineCallbacks
 def send_side():
-    w = wormhole.create(APPID, RELAY_URL, reactor)
+    print("Creating wormhole with dilation enabled...")
+    w = wormhole.create(APPID, RELAY_URL, reactor, _enable_dilate=True)
+
+    print("Allocating code...")
     yield w.allocate_code()
+
+    print("Getting code...")
     code = yield w.get_code()
     print(f"Wormhole code: {code}")
-    print("Waiting for receiver to connect...")
 
-    # Establish dilation
-    endpoints = yield w.dilate()
-    ep = endpoints[0]
-    print("Dilation established, connecting...")
+    print("Calling dilate()...")
+    endpoints = w.dilate()
+    print(f"Dilate returned: {endpoints}")
 
-    # Get the socket
-    socket = yield ep.connect()
-    print("Socket connected!")
+    control_ep, subchannel_client_ep, subchannel_server_ep = endpoints
+    print("Dilation established!")
+
+    # Connect using the client endpoint
+    print("Opening subchannel connection...")
+    port = yield subchannel_client_ep.connect("test-protocol")
+    print(f"Connect returned port: {port}")
+
+    protocol = port._protocol
+    print("Subchannel connected!")
 
     # Send test data
     test_message = b"Hello from sender! This is a test message through dilated wormhole."
-    socket.write(test_message)
+    protocol.transport.write(test_message)
     print(f"Sent: {test_message}")
 
     # Wait for response
-    response = yield socket.receive(1024)
-    print(f"Received response: {response}")
+    yield defer.Deferred().addTimeout(5, reactor)
 
-    socket.close()
+    protocol.transport.loseConnection()
     yield w.close()
     reactor.stop()
 
 
 @defer.inlineCallbacks
 def receive_side(code):
-    w = wormhole.create(APPID, RELAY_URL, reactor)
-    yield w.input_code(code)
-    print(f"Using code: {code}")
-    print("Connecting to sender...")
+    print("Creating wormhole with dilation enabled...")
+    w = wormhole.create(APPID, RELAY_URL, reactor, _enable_dilate=True)
 
-    # Establish dilation
-    endpoints = yield w.dilate()
-    ep = endpoints[0]
-    print("Dilation established, listening...")
+    print(f"Setting code: {code}")
+    w.set_code(code)
 
-    # Get the socket
-    socket = yield ep.connect()
-    print("Socket connected!")
+    print("Calling dilate()...")
+    endpoints = w.dilate()
+    print(f"Dilate returned: {endpoints}")
 
-    # Receive data
-    data = yield socket.receive(1024)
-    print(f"Received: {data}")
+    control_ep, subchannel_client_ep, subchannel_server_ep = endpoints
+    print("Dilation established, listening for subchannels...")
 
-    # Send response
-    response = b"Acknowledged! Message received by receiver."
-    socket.write(response)
-    print(f"Sent response: {response}")
+    # Listen for incoming subchannel connections
+    class ReceiveProtocol:
+        def dataReceived(self, data):
+            print(f"Received: {data}")
+            response = b"Acknowledged! Message received by receiver."
+            self.transport.write(response)
+            print(f"Sent response: {response}")
 
-    socket.close()
+        def connectionMade(self):
+            print("Subchannel connection established!")
+
+        def connectionLost(self, reason):
+            print("Connection closed")
+
+    class ReceiveFactory:
+        def buildProtocol(self, addr):
+            return ReceiveProtocol()
+
+    print("Starting listener...")
+    port = yield subchannel_server_ep.listen("test-protocol", ReceiveFactory())
+    print("Listening for 'test-protocol' subchannels...")
+
+    # Keep reactor running
+    yield defer.Deferred().addTimeout(10, reactor)
+
     yield w.close()
     reactor.stop()
 
@@ -99,6 +122,7 @@ def main():
         print(__doc__)
         sys.exit(1)
 
+    # Errors will propagate with full tracebacks
     d.addErrback(lambda failure: failure.printTraceback())
     reactor.run()
 
