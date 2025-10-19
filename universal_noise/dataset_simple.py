@@ -2,6 +2,7 @@ import os
 import random
 from typing import Dict, List, Tuple
 from PIL import Image
+from PIL import UnidentifiedImageError
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
@@ -28,7 +29,8 @@ class FaceDataset(Dataset):
 
 def gather_images(root_dir: str) -> Dict[str, List[str]]:
     """
-    Returns a dict mapping person_name -> list of image paths.
+    Returns a dict mapping person_name -> list of valid image paths.
+    Skips macOS metadata files (like '._*').
     """
     people = {}
     for person in os.listdir(root_dir):
@@ -36,11 +38,16 @@ def gather_images(root_dir: str) -> Dict[str, List[str]]:
         if not os.path.isdir(person_path):
             continue
 
-        imgs = [
-            os.path.join(person_path, f)
-            for f in os.listdir(person_path)
-            if f.lower().endswith((".jpg", ".jpeg", ".png"))
-        ]
+        imgs = []
+        for f in os.listdir(person_path):
+            if f.startswith("._"):  # skip macOS resource fork files
+                continue
+            if not f.lower().endswith((".jpg", ".jpeg", ".png")):
+                continue
+
+            full_path = os.path.join(person_path, f)
+            imgs.append(full_path)
+
         if imgs:
             people[person] = imgs
     return people

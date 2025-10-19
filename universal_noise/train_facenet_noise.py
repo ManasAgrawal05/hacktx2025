@@ -169,7 +169,7 @@ def train(
 
     # --- Data ---
     # Keep default parameters for dataloaders (as requested)
-    train_loader, val_loader = build_dataloaders(root_dir)
+    train_loader, val_loader = build_dataloaders(root_dir, batch_size=256)
 
     # --- Model ---
     model = load_facenet_from_hf(device=device, repo_id=repo_id, filename=filename)
