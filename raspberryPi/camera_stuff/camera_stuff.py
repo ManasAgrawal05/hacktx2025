@@ -57,11 +57,11 @@ class Camera:
         (x, y, w, h) = largest_face
 
         # Draw bounding box
-        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
         # Crop to largest face
-        cropped_face = img[y:y + h, x:x + w]
-        crop_face_to_square_and_resize(img, largest_face, output_size=250, margin=0.0, pad_color=(0,0,0))
+        # cropped_face = img[y:y + h, x:x + w]
+        cropped_face = crop_face_to_square_and_resize(img, largest_face, output_size=250, margin=0.0, pad_color=(0,0,0))
     
 
 
