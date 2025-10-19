@@ -9,6 +9,7 @@ Adversarial noise optimization for FaceNet embeddings, using a frozen model.
 Features:
 - Linear warmup + cosine annealing LR schedule
 - Early stopping based on validation distance (patience-based)
+- Spatial smoothness regularization (training only)
 - Saves per-epoch checkpoints AND best.pt when validation improves
 """
 
@@ -101,6 +102,17 @@ def bounded_noise(noise_raw, epsilon):
     return epsilon * torch.tanh(noise_raw)
 
 
+def compute_smoothness_loss(noise):
+    """
+    Compute spatial smoothness: sum of squared differences between adjacent pixels.
+    Returns mean squared difference across horizontal and vertical neighbors.
+    """
+    diff_h = noise[:, :, 1:] - noise[:, :, :-1]  # horizontal differences
+    diff_v = noise[:, 1:, :] - noise[:, :-1, :]  # vertical differences
+    smoothness = (diff_h ** 2).mean() + (diff_v ** 2).mean()
+    return smoothness
+
+
 # ---------------------------------------------------------
 # Training loop
 # ---------------------------------------------------------
@@ -129,6 +141,16 @@ def train(
     noise_raw = nn.Parameter(torch.zeros(3, 250, 250))
     nn.init.normal_(noise_raw, mean=0.0, std=1e-3)
     noise_raw = noise_raw.to(device)
+
+    # Calibrate smoothness weight to get ~0.25 contribution at init
+    with torch.no_grad():
+        init_smoothness = compute_smoothness_loss(noise_raw)
+        target_smoothness_loss = 0.25
+        smoothness_weight = target_smoothness_loss / init_smoothness.item()
+        print(f"[info] Initial smoothness: {init_smoothness.item():.6e}")
+        print(
+            f"[info] Calibrated smoothness weight: {smoothness_weight:.2f} (target loss: {target_smoothness_loss})")
+        print(f"[info] Expected reg loss at init: {smoothness_weight * init_smoothness.item():.4f}")
 
     optimizer = torch.optim.Adam([noise_raw], lr=lr)
 
@@ -161,6 +183,8 @@ def train(
         "filename": filename,
         "warmup_epochs": warmup_epochs,
         "patience": patience,
+        "smoothness_weight": smoothness_weight,
+        "target_smoothness_loss": target_smoothness_loss,
     }
     with open(os.path.join(run_dir, "config.json"), "w") as f:
         json.dump(cfg, f, indent=2)
@@ -176,6 +200,7 @@ def train(
             model.eval()
             running_loss = 0.0
             running_dist = 0.0
+            running_reg = 0.0
             steps = 0
 
             pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{num_epochs}", ncols=120)
@@ -194,7 +219,12 @@ def train(
                 e_noised = model(preprocess_for_facenet(imgs_noised))
                 dist = torch.norm(e_clean - e_noised, dim=1)
                 mean_dist = dist.mean()
-                loss = -mean_dist
+
+                # Compute losses
+                smoothness_loss = compute_smoothness_loss(noise_raw)
+                reg_loss = smoothness_weight * smoothness_loss
+                distance_loss = -mean_dist
+                loss = distance_loss + reg_loss
 
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
@@ -205,20 +235,26 @@ def train(
                 steps += 1
                 running_loss += loss.item()
                 running_dist += mean_dist.item()
+                running_reg += reg_loss.item()
                 avg_loss = running_loss / steps
                 avg_dist = running_dist / steps
+                avg_reg = running_reg / steps
                 current_lr = scheduler.get_last_lr()[0]
 
                 pbar.set_postfix({
-                    "avg_loss": f"{avg_loss:.4f}",
-                    "avg_dist": f"{avg_dist:.4f}",
+                    "dist": f"{avg_dist:.4f}",
+                    "reg": f"{avg_reg:.4f}",
+                    "total": f"{avg_loss:.4f}",
                     "lr": f"{current_lr:.5f}",
-                    "eps": f"{epsilon:.4f}",
                 })
 
-                history_rows.append((epoch, step, float(loss.item()), float(mean_dist.item())))
+                history_rows.append(
+                    (epoch, step, float(
+                        loss.item()), float(
+                        mean_dist.item()), float(
+                        reg_loss.item())))
 
-            # Validation
+            # Validation (distance only, no regularization)
             val_dist_sum = 0.0
             val_steps = 0
             with torch.no_grad():
@@ -238,7 +274,7 @@ def train(
 
             val_avg_dist = val_dist_sum / val_steps
             print(f"[val] Epoch {epoch}: mean distance = {val_avg_dist:.4f}")
-            history_rows.append((epoch, 0, float('nan'), float(val_avg_dist)))
+            history_rows.append((epoch, 0, float('nan'), float(val_avg_dist), float('nan')))
 
             # Save checkpoint for this epoch
             noise_bounded_snapshot = bounded_noise(noise_raw.detach().clone(), epsilon)
@@ -314,7 +350,7 @@ def _write_history_csv(csv_path, rows):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["epoch", "step", "loss", "distance"])
+        writer.writerow(["epoch", "step", "total_loss", "distance", "reg_loss"])
         writer.writerows(rows)
 
 
