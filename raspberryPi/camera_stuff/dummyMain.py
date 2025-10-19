@@ -1,5 +1,7 @@
 """Very basic terminal version of the whole thing"""
 
+import io
+from PIL import Image
 import camera_stuff
 from camera_stuff import Camera
 import masker
@@ -15,7 +17,8 @@ def capture_and_process_image():
     camera = Camera()
     jpeg_bytes = camera.capture_image()
     processed_jpeg = camera.process_image(jpeg_bytes)
-    return processed_jpeg
+    processed_image = Image.open(io.BytesIO(processed_jpeg))
+    return processed_image
 
 # make a clean and dirty version of the image and save to given filepaths
 
@@ -24,8 +27,7 @@ def save_clean_and_dirty(clean_path, dirty_path, jpeg):
     masker_instance = Masker()
 
     # Save clean image
-    with open(clean_path, "wb") as f:
-        f.write(jpeg)
+    jpeg.save(clean_path, format='JPEG')
     print(f"[info] Saved clean image to {clean_path}")
 
     dirty_img = masker_instance.generate_overlay(jpeg, masker_instance.load_noise_tensor())
