@@ -95,9 +95,9 @@ the recognition algorithm to validate the effectiveness of the mask and prints r
 
 def test_pre_processed(control_image_path, clean_b_path, dirty_b_path):
     # show the images
-    cv2.imshow("Control Image", cv2.imread(control_image_path))
-    cv2.imshow("Clean Image B", cv2.imread(clean_b_path))
-    cv2.imshow("Dirty Image B", cv2.imread(dirty_b_path))
+    #    cv2.imshow("Control Image", cv2.imread(control_image_path))
+    #    cv2.imshow("Clean Image B", cv2.imread(clean_b_path))
+    #    cv2.imshow("Dirty Image B", cv2.imread(dirty_b_path))
 
     # get and print distances (run the recognition algorithm)
     clean_distance = validate_screwup(control_image_path, clean_b_path)
@@ -141,4 +141,5 @@ def main():
     cv2.destroyAllWindows()
 
 
-test_pre_processed("clean_image_a.jpg", "clean_image_b.jpg", "dirty_image_b.jpg")
+if __name__ == '__main__':
+    main()
