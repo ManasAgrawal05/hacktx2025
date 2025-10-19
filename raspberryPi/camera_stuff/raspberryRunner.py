@@ -44,6 +44,8 @@ def main():
     save_clean_image("../../wormhole/send_images/negative.jpg", image_b)
     save_dirty_image("../../wormhole/send_images/positive.jpg", image_b)
 
+main()
+
 
 
 
