@@ -12,7 +12,7 @@ class Masker:
                  image_path="processed_face.jpg",
                  overlay_output_path="overlay_output.jpg",
                  difference_output_path="difference.png",
-                 epsilon=0.03,
+                 epsilon=1,
                  amplify_factor=10.0):
         self.noise_path = noise_path
         self.image_path = image_path
