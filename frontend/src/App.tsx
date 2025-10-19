@@ -5,9 +5,9 @@ import DisplayView from './components/DisplayView.tsx'
 import Starfield from './components/StarField.js'
 import StarfieldWithConstellations from './components/StarFieldWithConstellations.js'
 
-import originalImg from './original_full.jpg'
-import modifiedImg from './full_modified.jpg'
-import maskImg from './anchor.jpg'
+import originalImg from './uploads/original_full_b.jpg'
+import modifiedImg from './uploads/full_modified.jpg'
+import maskImg from './uploads/original_full.jpg'
 
 
 type AppState = 'ready' | 'loading' | 'display'
