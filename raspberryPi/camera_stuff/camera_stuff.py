@@ -100,6 +100,18 @@ def crop_face_to_square_and_resize(img, box, output_size=250, margin=0.0, pad_co
     pad_color: BGR tuple used to pad when the square extends beyond image boundary
     """
     x, y, w, h = map(int, box)
+
+    # Scale the box by 2.2x while keeping center the same
+    scale = 2.2
+    cx = x + w // 2
+    cy = y + h // 2
+    new_w = int(round(w * scale))
+    new_h = int(round(h * scale))
+    x = cx - new_w // 2
+    y = cy - new_h // 2
+    w = new_w
+    h = new_h
+
     h_img, w_img = img.shape[:2]
 
     # center and desired square side length
