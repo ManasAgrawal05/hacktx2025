@@ -17,12 +17,14 @@ interface StarfieldProps {
   numStars?: number;
   clusters?: number;
   connectLines?: boolean;
+  state?: string;
 }
 
 const StarfieldWithConstellations: React.FC<StarfieldProps> = ({
   numStars = 70,
   clusters = 4,
   connectLines = true,
+  state = 'ready',
 }) => {
   const stars: StarData[] = [];
 
@@ -87,28 +89,33 @@ const StarfieldWithConstellations: React.FC<StarfieldProps> = ({
         pointerEvents: "none",
       }}
     >
-      {stars.map((s, i) => (
-        <Star key={i} {...s} />
-      ))}
-
-      {connectLines && (
-        <svg
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
-          width="100%"
-          height="100%"
-        >
-          {lines.map((l, i) => (
-            <line
-              x1={`${l.x1}%`}
-              y1={`${l.y1}%`}
-              x2={`${l.x2}%`}
-              y2={`${l.y2}%`}
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth={.75} // current thickness
-            />
+      {state === 'ready' && (
+        <>
+          {stars.map((s, i) => (
+            <Star key={i} {...s} />
           ))}
-        </svg>
-      )}
+
+          {connectLines && (
+            <svg
+              style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+              width="100%"
+              height="100%"
+            >
+              {lines.map((l, i) => (
+                <line
+                  key={i}
+                  x1={`${l.x1}%`}
+                  y1={`${l.y1}%`}
+                  x2={`${l.x2}%`}
+                  y2={`${l.y2}%`}
+                  stroke="rgba(255,255,255,0.15)"
+                  strokeWidth={0.75}
+                />
+              ))}
+      </svg>
+    )}
+  </>
+)}
     </div>
   );
 };

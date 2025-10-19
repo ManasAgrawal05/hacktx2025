@@ -16,9 +16,10 @@ interface StarData {
 interface StarfieldProps {
   numStars?: number;
   clusters?: number;
+  state?: string;
 }
 
-const Starfield: React.FC<StarfieldProps> = ({ numStars = 70, clusters = 4 }) => {
+const Starfield: React.FC<StarfieldProps> = ({ numStars = 70, clusters = 4, state='ready'}) => {
   const stars: StarData[] = [];
   
   // cluster centers
@@ -57,14 +58,16 @@ const Starfield: React.FC<StarfieldProps> = ({ numStars = 70, clusters = 4 }) =>
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "transparent", 
+        backgroundColor: "transparent",
         zIndex: -1,
         pointerEvents: "none",
       }}
     >
-      {stars.map((s, i) => (
-        <Star key={i} {...s} />
-      ))}
+      {state === 'ready' &&
+        stars.map((s, i) => (
+          <Star key={i} {...s} />
+        ))
+      }
     </div>
   );
 };

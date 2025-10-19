@@ -22,7 +22,7 @@ body{
 .app-main{flex:1; display:flex; align-items:center; justify-content:center; padding:28px}
 .app-footer{padding:12px; text-align:center; color:#9fb6df66}
 
-.center-card{width:min(880px,92%); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:28px; border-radius:14px; box-shadow:0 6px 30px rgba(0,0,0,0.45); backdrop-filter: blur(6px)}
+.center-card{width:min(1200px,92%); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:28px; border-radius:14px; box-shadow:0 6px 30px rgba(0,0,0,0.45); backdrop-filter: blur(6px)}
 
 .primary-btn{background:linear-gradient(90deg,var(--accent), var(--accent-2)); color:#031029; border:none; padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer}
 .ghost-btn{background:transparent; color:#cfe8ff; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:8px; cursor:pointer}
