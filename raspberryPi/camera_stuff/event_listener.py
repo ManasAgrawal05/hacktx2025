@@ -32,7 +32,7 @@ async def handle_take_picture(sid, data):
     def run_script():
         try:
             print("▶️ Running raspberryRunner.py...")
-            subprocess.run(["~$HOME/env/bin/python", "./raspberryRunner.py"], shell=True, check=True)
+            subprocess.run(["$HOME/env/bin/python", "./raspberryRunner.py"], shell=True, check=True)
             print("✅ Picture taken successfully!")
             asyncio.run_coroutine_threadsafe(
                 sio.emit('server_message', {'msg': 'Picture taken successfully!'}, to=sid),
