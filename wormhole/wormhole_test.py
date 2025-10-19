@@ -11,41 +11,14 @@ import sys
 import wormhole
 import threading
 import time
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 
 # Public relay server
 RELAY_URL = "ws://relay.magic-wormhole.io:4000/v1"
 
 
-def send_messages(endpoint, name):
-    """Send test messages through the wormhole."""
-    messages = [
-        f"Hello from {name}!",
-        f"Message 2 from {name}",
-        f"Message 3 from {name}",
-        "DONE"
-    ]
-
-    for msg in messages:
-        print(f"[{name}] Sending: {msg}")
-        endpoint.send(msg.encode('utf-8'))
-        time.sleep(1)
-
-
-def receive_messages(endpoint, name):
-    """Receive messages from the wormhole."""
-    while True:
-        data = endpoint.receive()
-        if data is None:
-            print(f"[{name}] Connection closed")
-            break
-
-        msg = data.decode('utf-8')
-        print(f"[{name}] Received: {msg}")
-
-        if msg == "DONE":
-            break
-
-
+@inlineCallbacks
 def run_wormhole(code=None):
     """
     Establish dilated wormhole connection.
@@ -56,12 +29,12 @@ def run_wormhole(code=None):
     w = wormhole.create(
         appid="example.com/wormhole-test",
         relay_url=RELAY_URL,
-        reactor=None  # Use default reactor
+        reactor=reactor
     )
 
     if code is None:
         # Allocate new code - we're the initiator
-        code = w.allocate_code()
+        code = yield w.allocate_code()
         print(f"\n=== Your wormhole code: {code} ===\n")
         print("Run this on the other machine:")
         print(f"  python {sys.argv[0]} {code}\n")
@@ -74,33 +47,38 @@ def run_wormhole(code=None):
     print(f"[{role}] Establishing connection...")
 
     # Get versions - required handshake
-    versions = w.get_versions()
+    versions = yield w.get_versions()
     print(f"[{role}] Protocol versions: {versions}")
 
     # Dilate the connection
     print(f"[{role}] Dilating connection...")
-    endpoints = w.dilate()
+    endpoints = yield w.dilate()
 
     print(f"[{role}] Connection established! Starting bidirectional test...\n")
 
-    # Start receiver thread
-    recv_thread = threading.Thread(
-        target=receive_messages,
-        args=(endpoints, role)
-    )
-    recv_thread.start()
+    # Send and receive test messages
+    for i in range(3):
+        msg_out = f"Message {i+1} from {role}"
+        print(f"[{role}] Sending: {msg_out}")
+        yield endpoints.send(msg_out.encode('utf-8'))
 
-    # Give receiver a moment to start
-    time.sleep(0.5)
+        # Try to receive
+        data = yield endpoints.receive()
+        if data:
+            msg_in = data.decode('utf-8')
+            print(f"[{role}] Received: {msg_in}")
 
-    # Send messages from main thread
-    send_messages(endpoints, role)
+    # Send done signal
+    yield endpoints.send(b"DONE")
 
-    # Wait for receiver to finish
-    recv_thread.join()
+    # Receive final message
+    data = yield endpoints.receive()
+    if data:
+        print(f"[{role}] Received: {data.decode('utf-8')}")
 
     print(f"\n[{role}] Test complete!")
-    w.close()
+    yield w.close()
+    reactor.stop()
 
 
 if __name__ == "__main__":
@@ -111,3 +89,5 @@ if __name__ == "__main__":
     else:
         # No code - we're the initiator
         run_wormhole()
+
+    reactor.run()
