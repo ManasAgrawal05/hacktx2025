@@ -9,7 +9,7 @@ Adversarial noise optimization for FaceNet embeddings, using a frozen model.
 Features:
 - Linear warmup + cosine annealing LR schedule
 - Early stopping based on validation distance (patience-based)
-- Spatial smoothness regularization (training only)
+- Spatial smoothness regularization with progressive ramp-up
 - Saves per-epoch checkpoints AND best.pt when validation improves
 """
 
@@ -129,6 +129,8 @@ def train(
     filename=None,
     warmup_epochs=10,
     patience=5,
+    smoothness_target=0.25,
+    smoothness_ramp_epochs=20,
 ):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -142,15 +144,14 @@ def train(
     nn.init.normal_(noise_raw, mean=0.0, std=1e-3)
     noise_raw = noise_raw.to(device)
 
-    # Calibrate smoothness weight to get ~0.25 contribution at init
+    # Calibrate smoothness weight to get target contribution at full ramp
     with torch.no_grad():
         init_smoothness = compute_smoothness_loss(noise_raw)
-        target_smoothness_loss = 0.25
-        smoothness_weight = target_smoothness_loss / init_smoothness.item()
+        smoothness_weight_max = smoothness_target / init_smoothness.item()
         print(f"[info] Initial smoothness: {init_smoothness.item():.6e}")
-        print(
-            f"[info] Calibrated smoothness weight: {smoothness_weight:.2f} (target loss: {target_smoothness_loss})")
-        print(f"[info] Expected reg loss at init: {smoothness_weight * init_smoothness.item():.4f}")
+        print(f"[info] Calibrated max smoothness weight: {smoothness_weight_max:.2f}")
+        print(f"[info] Target reg loss at full ramp: {smoothness_target:.4f}")
+        print(f"[info] Ramp schedule: 0 → {smoothness_target} over {smoothness_ramp_epochs} epochs")
 
     optimizer = torch.optim.Adam([noise_raw], lr=lr)
 
@@ -183,8 +184,9 @@ def train(
         "filename": filename,
         "warmup_epochs": warmup_epochs,
         "patience": patience,
-        "smoothness_weight": smoothness_weight,
-        "target_smoothness_loss": target_smoothness_loss,
+        "smoothness_weight_max": smoothness_weight_max,
+        "smoothness_target": smoothness_target,
+        "smoothness_ramp_epochs": smoothness_ramp_epochs,
     }
     with open(os.path.join(run_dir, "config.json"), "w") as f:
         json.dump(cfg, f, indent=2)
@@ -198,6 +200,11 @@ def train(
     try:
         for epoch in range(1, num_epochs + 1):
             model.eval()
+
+            # Compute smoothness weight for this epoch (linear ramp from 0 to max)
+            ramp_factor = min(1.0, epoch / smoothness_ramp_epochs)
+            smoothness_weight = smoothness_weight_max * ramp_factor
+
             running_loss = 0.0
             running_dist = 0.0
             running_reg = 0.0
@@ -244,6 +251,7 @@ def train(
                 pbar.set_postfix({
                     "dist": f"{avg_dist:.4f}",
                     "reg": f"{avg_reg:.4f}",
+                    "ramp": f"{ramp_factor:.2f}",
                     "total": f"{avg_loss:.4f}",
                     "lr": f"{current_lr:.5f}",
                 })
@@ -252,7 +260,7 @@ def train(
                     (epoch, step, float(
                         loss.item()), float(
                         mean_dist.item()), float(
-                        reg_loss.item())))
+                        reg_loss.item()), ramp_factor))
 
             # Validation (distance only, no regularization)
             val_dist_sum = 0.0
@@ -273,8 +281,15 @@ def train(
                     val_steps += 1
 
             val_avg_dist = val_dist_sum / val_steps
-            print(f"[val] Epoch {epoch}: mean distance = {val_avg_dist:.4f}")
-            history_rows.append((epoch, 0, float('nan'), float(val_avg_dist), float('nan')))
+            print(
+                f"[val] Epoch {epoch}: mean distance = {val_avg_dist:.4f} (ramp factor = {ramp_factor:.2f})")
+            history_rows.append(
+                (epoch,
+                 0,
+                 float('nan'),
+                    float(val_avg_dist),
+                    float('nan'),
+                    ramp_factor))
 
             # Save checkpoint for this epoch
             noise_bounded_snapshot = bounded_noise(noise_raw.detach().clone(), epsilon)
@@ -350,7 +365,7 @@ def _write_history_csv(csv_path, rows):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["epoch", "step", "total_loss", "distance", "reg_loss"])
+        writer.writerow(["epoch", "step", "total_loss", "distance", "reg_loss", "ramp_factor"])
         writer.writerows(rows)
 
 
@@ -374,6 +389,10 @@ def parse_args():
                         help="Number of warmup epochs before cosine annealing.")
     parser.add_argument("--patience", type=int, default=5,
                         help="Early stopping patience (epochs without improvement).")
+    parser.add_argument("--smoothness-target", type=float, default=0.25,
+                        help="Target regularization loss contribution at full ramp.")
+    parser.add_argument("--smoothness-ramp-epochs", type=int, default=20,
+                        help="Number of epochs to linearly ramp smoothness from 0 to target.")
     return parser.parse_args()
 
 
@@ -391,4 +410,6 @@ if __name__ == "__main__":
         filename=args.hf_filename,
         warmup_epochs=args.warmup_epochs,
         patience=args.patience,
+        smoothness_target=args.smoothness_target,
+        smoothness_ramp_epochs=args.smoothness_ramp_epochs,
     )
