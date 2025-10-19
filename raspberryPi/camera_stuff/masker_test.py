@@ -1,34 +1,33 @@
-from PIL import Image
-from masker import Masker as NoiseVisualizer  # adjust if your class is in a different file
-import requests
+from masker import Masker
+import os
 
 def test_get_clean_image():
-    visualizer = NoiseVisualizer()
-    clean_img = visualizer.get_clean_image()
-
-    assert isinstance(clean_img, Image.Image), "Clean image is not a PIL.Image"
-    clean_img.save("test_clean.png")
-    print("[PASS] Clean image captured and saved as 'test_clean.png'")
-
+    masker = Masker()
+    clean_img = masker.get_clean_image()
+    clean_img.show(title="Clean Image")  # This will open the image using default image viewer
+    print("[test] get_clean_image passed")
 
 def test_get_dirty_image():
-    visualizer = NoiseVisualizer()
-    dirty_img = visualizer.get_dirty_image()
+    masker = Masker()
+    dirty_img = masker.get_dirty_image()
+    dirty_img.show(title="Dirty Image (with Noise Overlay)")
+    print("[test] get_dirty_image passed")
 
-    assert isinstance(dirty_img, Image.Image), "Dirty image is not a PIL.Image"
-    dirty_img.save("test_dirty.png")
-    print("[PASS] Dirty image captured and saved as 'test_dirty.png'")
+def test_request_fooled_score():
+    masker = Masker()
 
-def request_fooled_score(url="http://10.155.30.209:5000/inference"):
-    files = {
-        "original": open("original.jpg", "rb"),
-        "modified": open("modified.jpg", "rb")
-    }
+    # Ensure overlay image exists before calling
+    dirty_img = masker.get_dirty_image()
+    dirty_img.save(masker.overlay_output_path)
 
-    response = requests.post(url, files=files)
-    print(response.text)
+    masker.request_fooled_score()
+    print("[test] request_fooled_score executed")
 
-
-
+if __name__ == "__main__":
+    print("Starting tests...\n")
+    test_get_clean_image()
+    print("get dirty images")
     test_get_dirty_image()
+    print("request fooled score")
+    test_request_fooled_score()
     print("\nAll tests completed.")

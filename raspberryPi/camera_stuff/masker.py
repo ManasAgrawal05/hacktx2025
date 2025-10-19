@@ -3,6 +3,7 @@ from PIL import Image
 from visualize_noise import make_overlay
 from camera_stuff import Camera  # Make sure this points to your actual camera module
 import numpy as np
+import requests
 
 class Masker:
     def __init__(self,
@@ -100,6 +101,19 @@ class Masker:
         print("[info] Generated dirty (overlayed) image")
 
         return overlay_img
+    
+    def request_fooled_score(self, url="http://10.155.30.209:5000/inference"):
+        print("IN REQUEST FOOLED SCORE")
+        files = {
+            "original": open(self.image_path, "rb"),
+            "modified": open(self.overlay_output_path, "rb")
+        }
+
+        print("PRE RESPONSE")
+        response = requests.post(url, files=files)
+        print("POST RESPONSE")
+        print(response.text)
+
 
 
     def run(self):
