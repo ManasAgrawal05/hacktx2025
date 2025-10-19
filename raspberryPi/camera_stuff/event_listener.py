@@ -32,7 +32,7 @@ async def handle_take_picture(sid, data):
     def run_script():
         try:
             print("▶️ Running raspberryRunner.py...")
-            subprocess.run(["~/env/bin/python", "raspberryRunner.py"], shell=True, check=True)
+            subprocess.run(["~$HOME/env/bin/python", "./raspberryRunner.py"], shell=True, check=True)
             print("✅ Picture taken successfully!")
             asyncio.run_coroutine_threadsafe(
                 sio.emit('server_message', {'msg': 'Picture taken successfully!'}, to=sid),
@@ -47,5 +47,5 @@ async def handle_take_picture(sid, data):
     loop.run_in_executor(None, run_script)
 
 if __name__ == '__main__':
-    print("🚀 Raspberry Pi receiver listening on port 8888 ...")
-    web.run_app(app, host='0.0.0.0', port=8888)
+    print("🚀 Raspberry Pi receiver listening on port 8898 ...")
+    web.run_app(app, host='0.0.0.0', port=8889)
