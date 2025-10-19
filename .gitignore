@@ -1,0 +1,7 @@
+env
+universal_noise/lfw-deepfunneled
+universal_noise/lfw.tar
+__pycache__
+universal_noise/__pycache__
+universal_noise/__MACOSX
+universal_noise/runs
