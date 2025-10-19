@@ -1,5 +1,10 @@
-pip install huggingface_hub tqdm torch torchvision pandas opencv-python pillow-heif
+install docker desktop
 
-pip install -U "numpy>=2,<2.3" "pillow>=11.1.0" torch torchvision facenet-pytorch
+to start the docker server:
+1. cd to server folder
+2. run `docker build -t server .` to build
+3. run `docker run -p 5000:5000 server` to run
 
-pip install -U "numpy>=2,<2.3" "pillow>=11.1.0" torch torchvision facenet-pytorch huggingface_hub tqdm pandas opencv-python pillow-heif
+to send requests:
+1. in a different terminal window, cd to raspberryPi\camera_stuff
+2. run `curl -X POST http://10.155.30.209:5000/inference \  -F "original=@processed_face.jpg" \  -F "modified=@overlay_output.png"`
