@@ -58,6 +58,7 @@ def main():
         # space runs the capture system
         elif keyboard.is_pressed(' '):
             print("Executing program...")
+            
             # get and save the anchor image
             anchor_large = capture_image()
             # save the main anchor image
