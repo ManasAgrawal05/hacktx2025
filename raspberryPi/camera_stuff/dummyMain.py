@@ -5,6 +5,8 @@ from camera_stuff import Camera
 import masker
 from masker import Masker
 import cv2
+import torch
+import cli_wrapper as clw
 
 # take image and store to given filepath
 def capture_and_process_image():
@@ -34,8 +36,47 @@ def save_clean_and_dirty(clean_path, dirty_path, jpeg):
 validate that the mask works by calling the facial recognition model on a 
 masked an unmasked image of the same person
 """
-def validate_screwup(clean_image, dirty_image):
-    pass
+def validate_screwup(clean_image_path, dirty_image_path, device=None, use_training_preprocess=False, hf_repo_id=None, hf_filename=None):
+    """
+    Compute FaceNet Euclidean distance between two image file paths.
+
+    Args:
+        img1_path (str): Path to the first image.
+        img2_path (str): Path to the second image.
+        device (str or torch.device): 'cpu', 'cuda', or None for auto.
+        use_training_preprocess (bool): Whether to use 224→160 preprocessing.
+        hf_repo_id (str): Optional HuggingFace repo ID for model weights.
+        hf_filename (str): Optional filename in the HuggingFace repo.
+
+    Returns:
+        float: Euclidean distance between FaceNet embeddings.
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    elif isinstance(device, str):
+        device = torch.device(device)
+
+    print(f"[info] Using device: {device}")
+    model = clw.load_facenet_from_hf(device, repo_id=hf_repo_id, filename=hf_filename)
+    
+    img1 = clw.Image.open(clean_image_path).convert("RGB")
+    img2 = clw.Image.open(dirty_image_path).convert("RGB")
+
+    if use_training_preprocess:
+        print("[info] Using TRAINING preprocessing: 224x224 (PIL) → 160x160 (torch)")
+        x1 = clw.preprocess_for_facenet_TRAINING_STYLE(img1).to(device)
+        x2 = clw.preprocess_for_facenet_TRAINING_STYLE(img2).to(device)
+    else:
+        print("[info] Using ORIGINAL preprocessing: 160x160 (PIL)")
+        x1 = clw.preprocess_for_facenet_ORIGINAL(img1).to(device)
+        x2 = clw.preprocess_for_facenet_ORIGINAL(img2).to(device)
+
+    with torch.no_grad():
+        e1 = model(x1)
+        e2 = model(x2)
+        dist = torch.norm(e1 - e2, p=2).item()
+
+    return dist
 
 
 def main():
