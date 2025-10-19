@@ -5,6 +5,7 @@ from camera_stuff import Camera  # Make sure this points to your actual camera m
 import numpy as np
 import requests
 
+
 class Masker:
     def __init__(self,
                  noise_path="models/noise.pt",
@@ -64,12 +65,12 @@ class Masker:
         diff_enhanced = np.clip(diff_gray * self.amplify_factor, 0, 255).astype(np.uint8)
 
         return Image.fromarray(diff_enhanced, mode="L")
-    
+
     # FOR EXTERNAL USAGE
     def get_clean_image(self, image_path="processed_face.jpg"):
         """
         Capture and return a clean (un-noised) image.
-        
+
         Returns:
             PIL.Image: Clean processed image.
         """
@@ -102,7 +103,7 @@ class Masker:
         overlay_img.save(self.overlay_output_path)
 
         return overlay_img
-    
+
     def request_fooled_score(self, url="http://10.155.30.209:5000/inference"):
         print("IN REQUEST FOOLED SCORE")
         files = {
@@ -114,8 +115,6 @@ class Masker:
         response = requests.post(url, files=files)
         print("POST RESPONSE")
         print(response.text)
-
-
 
     def run(self):
         """Run the full noise visualization pipeline."""
@@ -134,4 +133,3 @@ class Masker:
         diff_img = self.visualize_difference(base_img, overlay_img)
         diff_img.save(self.difference_output_path)
         print(f"[info] Saved difference visualization to {self.difference_output_path}")
-
