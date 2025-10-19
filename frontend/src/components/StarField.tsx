@@ -57,7 +57,7 @@ const Starfield: React.FC<StarfieldProps> = ({ numStars = 70, clusters = 4 }) =>
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "#040406ff",
+        backgroundColor: "transparent", 
         zIndex: -1,
         pointerEvents: "none",
       }}

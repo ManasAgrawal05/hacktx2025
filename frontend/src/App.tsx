@@ -2,7 +2,9 @@ import React, { useState, useCallback } from 'react'
 import UploadArea from './components/UploadArea.tsx'
 import LoadingBar from './components/LoadingBar.tsx'
 import DisplayView from './components/DisplayView.tsx'
-import Starfield from './components/StarField.tsx'
+import Starfield from './components/StarField.js'
+import StarfieldParticles from './components/StarFieldParticles.js'
+import StarfieldWithConstellations from './components/StarFieldWithConstellations.js'
 
 type AppState = 'ready' | 'loading' | 'display'
 
@@ -14,8 +16,10 @@ export default function App(): JSX.Element {
   const [statusText, setStatusText] = useState<string>('')
   const [statistic, setStatistic] = useState<number | null>(null)
 
-  const numStars = 100;
-  const clusters = 10;
+  const numStarsNorm = 100;
+  const clustersNorm = 10;
+  const numStarsConstellations = 40;
+  const clustersConstellations = 4;
 
   const resetAll = useCallback(() => {
     setState('ready')
@@ -61,7 +65,6 @@ export default function App(): JSX.Element {
   return (
     <div className="app-root">
       
-      <Starfield numStars={numStars} clusters={clusters} />
       <header className="app-header">
         <h1 className="logo">BlackHole</h1>
         <p className="tag">Your digital Invisibilty Cloak</p>
@@ -94,6 +97,8 @@ export default function App(): JSX.Element {
       <footer className="app-footer">
         <small>Space themed prototype — demo only</small>
       </footer>
+      <Starfield numStars={numStarsNorm} clusters={clustersNorm} />
+      <StarfieldWithConstellations numStars={numStarsConstellations} clusters={clustersConstellations} />
     </div>
   )
 }

@@ -28,8 +28,51 @@ body{
 .ghost-btn{background:transparent; color:#cfe8ff; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:8px; cursor:pointer}
 .muted{color:#bcd7ff88}
 
-.upload-area{text-align:center}
-.cosmic-hint{margin-top:18px; color:#a6c7ff66}
+.upload-area-circle {
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 0 40px 15px rgba(255, 255, 255, 0.3); /* white glow */
+  color: white;
+  margin: 0 auto;
+  position: relative;
+}
+
+.app-name {
+  font-family: 'Arial', sans-serif;
+  font-size: 1.8rem;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.upload-content h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.upload-content .muted {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+}
+
+.primary-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: white;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
 
 .loading-wrap{text-align:center}
 .loading-bar{width:100%; height:18px; background:rgba(255,255,255,0.04); border-radius:12px; overflow:hidden; margin-top:12px}
@@ -49,7 +92,7 @@ body{
 
 @keyframes drift {
   0%   { transform: translate(0, 0); }
-  50%  { transform: translate(var(--dx, 1px), var(--dy, 1px)); }
+  50%  { transform: translate(var(--dx, 100px), var(--dy, 1px)); }
   100% { transform: translate(0, 0); }
 }
 
