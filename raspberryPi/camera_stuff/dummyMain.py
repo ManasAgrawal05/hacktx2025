@@ -24,9 +24,7 @@ def save_clean_and_dirty(clean_path, dirty_path, jpeg):
         f.write(jpeg)
     print(f"[info] Saved clean image to {clean_path}")
     
-    # Load clean image and generate dirty image
-    clean_img = masker_instance.get_clean_image(clean_path)
-    dirty_img = masker_instance.get_dirty_image()
+    dirty_img = masker_instance.generate_overlay(jpeg, masker_instance.load_noise_tensor())
     
     # Save dirty image
     dirty_img.save(dirty_path)
@@ -87,8 +85,8 @@ def main():
     dirty_image_b_path = "dirty_image_b.jpg"
 
     # Capture and process images
-    jpeg_a = save_clean_and_dirty(clean_image_a_path, dirty_image_a_path, capture_and_process_image())
-    jpeg_b = save_clean_and_dirty(clean_image_b_path, dirty_image_b_path, capture_and_process_image())
+    save_clean_and_dirty(clean_image_a_path, dirty_image_a_path, capture_and_process_image())
+    save_clean_and_dirty(clean_image_b_path, dirty_image_b_path, capture_and_process_image())
 
     # show clean a as a reference point
     cv2.imshow("Image A", cv2.imread(clean_image_a_path))
