@@ -19,7 +19,7 @@ def test_get_dirty_image():
     dirty_img.save("test_dirty.png")
     print("[PASS] Dirty image captured and saved as 'test_dirty.png'")
 
-def request_fooled_score(url="http://192.168.1.42:5000/inference"):
+def request_fooled_score(url="http://10.155.30.209:5000/inference"):
     files = {
         "original": open("original.jpg", "rb"),
         "modified": open("modified.jpg", "rb")
