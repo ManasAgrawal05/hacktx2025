@@ -137,5 +137,4 @@ def main():
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    main()
+test_pre_processed("clean_image_a.jpg", "clean_image_b.jpg", "dirty_image_b.jpg")
