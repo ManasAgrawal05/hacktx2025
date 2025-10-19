@@ -62,7 +62,7 @@ def main():
             # get and save the anchor image
             anchor_large = capture_image()
             # save the main anchor image
-            save_clean_image("../../wormhole/send_images/anchor_un_processed.jpg", anchor)
+            # save_clean_image("../../wormhole/send_images/anchor_un_processed.jpg", anchor)
             anchor = process_image(anchor_large)
             save_clean_image("../../wormhole/send_images/anchor.jpg", anchor)
             time.sleep(2)
@@ -70,7 +70,7 @@ def main():
             # get image b
             image_b_large = capture_image()
             # save the large image b
-            save_clean_image("../../wormhole/send_images/test_un_processed.jpg", image_b_large)
+            # save_clean_image("../../wormhole/send_images/test_un_processed.jpg", image_b_large)
             image_b = process_image(image_b_large)
             save_clean_image("../../wormhole/send_images/negative.jpg", image_b)
             time.sleep(2)
