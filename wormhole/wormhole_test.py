@@ -1,93 +1,107 @@
 #!/usr/bin/env python3
 """
-Test script for bidirectional wormhole communication.
-
+Test script for Magic Wormhole dilation.
 Usage:
-  Terminal 1: python wormhole_test.py
-  Terminal 2: python wormhole_test.py <code-from-terminal-1>
+    # On machine 1 (sender):
+    python wormhole_dilation_test.py send
+
+    # On machine 2 (receiver):
+    python wormhole_dilation_test.py receive <code>
 """
 
 import sys
-import wormhole
-import threading
-import time
-from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet import reactor, defer
+from wormhole import wormhole
 
-# Public relay server
+APPID = "example.com/wormhole-dilation-test"
 RELAY_URL = "ws://relay.magic-wormhole.io:4000/v1"
 
 
-@inlineCallbacks
-def run_wormhole(code=None):
-    """
-    Establish dilated wormhole connection.
-    If code is None, allocate a new code (sender).
-    If code is provided, use that code (receiver).
-    """
-    # Create wormhole with public relay
-    w = wormhole.create(
-        appid="example.com/wormhole-test",
-        relay_url=RELAY_URL,
-        reactor=reactor
-    )
+@defer.inlineCallbacks
+def send_side():
+    w = wormhole.create(APPID, RELAY_URL, reactor)
+    yield w.allocate_code()
+    code = yield w.get_code()
+    print(f"Wormhole code: {code}")
+    print("Waiting for receiver to connect...")
 
-    if code is None:
-        # Allocate new code - we're the initiator
-        code = yield w.allocate_code()
-        print(f"\n=== Your wormhole code: {code} ===\n")
-        print("Run this on the other machine:")
-        print(f"  python {sys.argv[0]} {code}\n")
-        role = "INITIATOR"
-    else:
-        # Use provided code
-        w.set_code(code)
-        role = "RECEIVER"
-
-    print(f"[{role}] Establishing connection...")
-
-    # Get versions - required handshake
-    versions = yield w.get_versions()
-    print(f"[{role}] Protocol versions: {versions}")
-
-    # Dilate the connection
-    print(f"[{role}] Dilating connection...")
+    # Establish dilation
     endpoints = yield w.dilate()
+    ep = endpoints[0]
+    print("Dilation established, connecting...")
 
-    print(f"[{role}] Connection established! Starting bidirectional test...\n")
+    # Get the socket
+    socket = yield ep.connect()
+    print("Socket connected!")
 
-    # Send and receive test messages
-    for i in range(3):
-        msg_out = f"Message {i+1} from {role}"
-        print(f"[{role}] Sending: {msg_out}")
-        yield endpoints.send(msg_out.encode('utf-8'))
+    # Send test data
+    test_message = b"Hello from sender! This is a test message through dilated wormhole."
+    socket.write(test_message)
+    print(f"Sent: {test_message}")
 
-        # Try to receive
-        data = yield endpoints.receive()
-        if data:
-            msg_in = data.decode('utf-8')
-            print(f"[{role}] Received: {msg_in}")
+    # Wait for response
+    response = yield socket.receive(1024)
+    print(f"Received response: {response}")
 
-    # Send done signal
-    yield endpoints.send(b"DONE")
-
-    # Receive final message
-    data = yield endpoints.receive()
-    if data:
-        print(f"[{role}] Received: {data.decode('utf-8')}")
-
-    print(f"\n[{role}] Test complete!")
+    socket.close()
     yield w.close()
     reactor.stop()
 
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Code provided - we're the receiver
-        code = sys.argv[1]
-        run_wormhole(code)
-    else:
-        # No code - we're the initiator
-        run_wormhole()
+@defer.inlineCallbacks
+def receive_side(code):
+    w = wormhole.create(APPID, RELAY_URL, reactor)
+    yield w.input_code(code)
+    print(f"Using code: {code}")
+    print("Connecting to sender...")
 
+    # Establish dilation
+    endpoints = yield w.dilate()
+    ep = endpoints[0]
+    print("Dilation established, listening...")
+
+    # Get the socket
+    socket = yield ep.connect()
+    print("Socket connected!")
+
+    # Receive data
+    data = yield socket.receive(1024)
+    print(f"Received: {data}")
+
+    # Send response
+    response = b"Acknowledged! Message received by receiver."
+    socket.write(response)
+    print(f"Sent response: {response}")
+
+    socket.close()
+    yield w.close()
+    reactor.stop()
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    mode = sys.argv[1]
+
+    if mode == "send":
+        d = send_side()
+    elif mode == "receive":
+        if len(sys.argv) < 3:
+            print("Error: receive mode requires a wormhole code")
+            print(__doc__)
+            sys.exit(1)
+        code = sys.argv[2]
+        d = receive_side(code)
+    else:
+        print(f"Error: unknown mode '{mode}'")
+        print(__doc__)
+        sys.exit(1)
+
+    d.addErrback(lambda failure: failure.printTraceback())
     reactor.run()
+
+
+if __name__ == "__main__":
+    main()
