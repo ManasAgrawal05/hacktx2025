@@ -64,36 +64,34 @@ def tensor_to_image(tensor, neutral_gray=False, epsilon=None):
     img_uint8 = (img_np * 255).clip(0, 255).astype(np.uint8)
     return Image.fromarray(img_uint8, mode=mode)
 
-
 def make_overlay(base_img, noise_tensor, epsilon, device="cpu"):
-    """Overlay noise on image: show original (left) vs modified (right) side by side."""
+    """
+    Overlay noise on the base image by adding the scaled noise,
+    return only the noisy image (not side-by-side).
+    """
     base = base_img.convert("RGB")
     w, h = base.size
 
     # Convert base image to tensor in [0,1]
     base_tensor = torch.from_numpy(np.array(base)).permute(2, 0, 1).float() / 255.0
-    base_tensor = base_tensor.unsqueeze(0).to(device)
+    base_tensor = base_tensor.unsqueeze(0).to(device)  # shape: (1, 3, H, W)
 
-    # Resize noise to match base
-    noise_tensor = noise_tensor.unsqueeze(0).to(device)
-    noise_resized = F.interpolate(noise_tensor, size=(h, w), mode="bilinear", align_corners=False)
-    noise_resized = noise_resized.squeeze(0)
+    # Resize noise to match base image size
+    noise_tensor = noise_tensor.unsqueeze(0).to(device)  # shape: (1, C, h_noise, w_noise)
+    noise_resized = torch.nn.functional.interpolate(
+        noise_tensor, size=(h, w), mode="bilinear", align_corners=False
+    )
+    noise_resized = noise_resized.squeeze(0)  # shape: (C, H, W)
 
-    # Apply perturbation: clamp to [0,1]
+    # Apply noise with epsilon scaling, clamp to [0,1]
     perturbed = torch.clamp(base_tensor + noise_resized.unsqueeze(0) * epsilon, 0, 1)
-    perturbed = perturbed.squeeze(0)
+    perturbed = perturbed.squeeze(0)  # shape: (3, H, W)
 
-    orig_np = (base_tensor.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
-    pert_np = (perturbed.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+    # Convert back to PIL Image
+    perturbed_np = (perturbed.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)  # (H, W, 3)
+    noisy_img = Image.fromarray(perturbed_np, mode="RGB")
 
-    # Combine side-by-side with divider
-    divider_width = 5
-    combined = np.ones((h, w * 2 + divider_width, 3), dtype=np.uint8) * 255
-    combined[:, :w] = orig_np
-    combined[:, w:w + divider_width] = 0  # black divider
-    combined[:, w + divider_width:] = pert_np
-
-    return Image.fromarray(combined, mode="RGB")
+    return noisy_img
 
 
 def main():
