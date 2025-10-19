@@ -1,7 +1,7 @@
 import socketio
 
 # Change to your Pi's public or tunnel URL
-SERVER_URL = "https://orange-composer-cancer-peripheral.trycloudflare.com"
+SERVER_URL = "https://dress-namely-tuning-jewellery.trycloudflare.com"
 
 sio = socketio.Client()
 
