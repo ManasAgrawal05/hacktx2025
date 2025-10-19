@@ -2,6 +2,7 @@ from aiohttp import web
 import asyncio
 import socketio
 import subprocess
+from raspberryRunner import main
 
 # Create async Socket.IO server
 sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins="*")
@@ -32,10 +33,7 @@ async def handle_take_picture(sid, data):
     def run_script():
         try:
             print("▶️ Running raspberryRunner.py...")
-            subprocess.run(["$HOME/env/bin/python",
-                            "$HOME/hacktx2025/raspberryPi/camera_stuff/raspberryRunner.py"],
-                           shell=True,
-                           check=True)
+            main()
             print("✅ Picture taken successfully!")
             asyncio.run_coroutine_threadsafe(
                 sio.emit('server_message', {'msg': 'Picture taken successfully!'}, to=sid),

@@ -8,6 +8,8 @@ import time
 import io
 
 # take an image and store as a jpeg
+
+
 def capture_and_process_image():
     camera = Camera()
     jpeg_bytes = camera.capture_image()
@@ -16,6 +18,8 @@ def capture_and_process_image():
     return processed_image
 
 # save a clean version of the image
+
+
 def save_clean_image(clean_path, jpeg):
     masker_instance = Masker()
 
@@ -35,6 +39,8 @@ def save_dirty_image(dirty_path, jpeg):
     print(f"[info] Saved dirty image to {dirty_path}")
 
 # get and save an anchor image + a clean and dirty image b
+
+
 def main():
     # get and save the anchor image
     anchor = capture_and_process_image()
@@ -47,9 +53,6 @@ def main():
     time.sleep(2)
     save_dirty_image("../../wormhole/send_images/positive.jpg", image_b)
 
-main()
 
-
-
-
-
+if __name__ == '__main__':
+    main()
