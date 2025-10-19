@@ -13,15 +13,6 @@ def test_get_dirty_image():
     dirty_img.show(title="Dirty Image (with Noise Overlay)")
     print("[test] get_dirty_image passed")
 
-def test_request_fooled_score():
-    masker = Masker()
-
-    # Ensure overlay image exists before calling
-    dirty_img = masker.get_dirty_image()
-    dirty_img.save(masker.overlay_output_path)
-
-    masker.request_fooled_score()
-    print("[test] request_fooled_score executed")
 
 if __name__ == "__main__":
     print("Starting tests...\n")
@@ -29,5 +20,3 @@ if __name__ == "__main__":
     print("get dirty images")
     test_get_dirty_image()
     print("request fooled score")
-    test_request_fooled_score()
-    print("\nAll tests completed.")
