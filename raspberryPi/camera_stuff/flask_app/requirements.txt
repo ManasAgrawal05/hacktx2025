@@ -1,0 +1,7 @@
+Flask
+torch
+Pillow
+numpy
+opencv-python
+camera_stuff @ file:///home/manav/Documents/projects/blackhole/hacktx2025/raspberryPi/camera_stuff
+masker @ file:///home/manav/Documents/projects/blackhole/hacktx2025/raspberryPi/camera_stuff/masker.py

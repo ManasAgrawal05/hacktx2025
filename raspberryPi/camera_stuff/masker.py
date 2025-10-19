@@ -9,7 +9,7 @@ class Masker:
     def __init__(self,
                  noise_path="models/noise.pt",
                  image_path="processed_face.jpg",
-                 overlay_output_path="overlay_output.png",
+                 overlay_output_path="overlay_output.jpg",
                  difference_output_path="difference.png",
                  epsilon=0.03,
                  amplify_factor=10.0):
