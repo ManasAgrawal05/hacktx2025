@@ -83,12 +83,14 @@ def pil_image_to_tensor(img_pil: Image.Image) -> torch.Tensor:
 
 @app.route('/inference', methods=['POST'])
 def infer():
+    print("Received inference request.")
     # Accept a few possible keys for flexibility:
     if "original" not in request.files or "modified" not in request.files:
         return jsonify({
             "error": "Please upload two images with keys 'original' and 'modified'."
         }), 400
-
+    
+    print("Reading uploaded images...")
     # Read files
     try:
         pil_orig = Image.open(BytesIO(request.files["original"].read()))
@@ -96,31 +98,41 @@ def infer():
     except Exception as e:
         return jsonify({"error": f"Failed to read uploaded images: {str(e)}"}), 400
     
+    print("Converting images to tensors...")
     try:
         t1 = pil_image_to_tensor(pil_orig).unsqueeze(0).to(device=device, dtype=torch.float32)  # 1,C,H,W
         t2 = pil_image_to_tensor(pil_mod).unsqueeze(0).to(device=device, dtype=torch.float32)
     except Exception as e:
         return jsonify({"error": f"Failed to convert images to tensors: {str(e)}"}), 500
 
+
+    print("Preprocessing images...")
     # Preprocess same as training (resizing + [-1,1])
     inp1 = preprocess_for_facenet_tensor(t1)
     inp2 = preprocess_for_facenet_tensor(t2)
 
+
+    print("Running model inference...")
     # Run model (FaceNet) to get embeddings
     model.eval()
     with torch.no_grad():
         e1 = model(inp1)   # shape (1, embedding_dim)
         e2 = model(inp2)
 
+
+    print("Computing metrics...")
     # Compute metrics: L2 distance and cosine similarity
     # L2:
     l2_dist = torch.norm(e1 - e2, p=2, dim=1).cpu().item()
     # Cosine similarity (1 means identical direction)
     cos_sim = F.cosine_similarity(e1, e2, dim=1).cpu().item()
 
+
+    print("Preparing response...")
     # Optionally return embeddings (as lists) for downstream use
     emb1 = e1.squeeze(0).cpu().numpy().tolist()
     emb2 = e2.squeeze(0).cpu().numpy().tolist()
+
 
     response = {
         "l2_distance": float(l2_dist),
@@ -141,6 +153,5 @@ if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0')
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = load_facenet_from_hf(device=device)
+model = load_facenet_from_hf()
 print("Saved recognizer to facenet_recognizer.pt")
