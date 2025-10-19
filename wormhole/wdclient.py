@@ -6,7 +6,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 # ======= Configuration =======
-TUNNEL_URL = "https://orange-composer-cancer-peripheral.trycloudflare.com"
+TUNNEL_URL = "https://theta-hour-hygiene-happening.trycloudflare.com"
 WATCH_FOLDER = "./send_images"  # folder to watch for new images
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.bmp')
 # =============================
