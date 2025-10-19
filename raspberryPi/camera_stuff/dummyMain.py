@@ -86,6 +86,27 @@ def validate_screwup(clean_image_path, dirty_image_path, device=None,
 
     return dist
 
+""" 
+takes path to saved control image, clean image b, and dirty image b, runs 
+the recognition algorithm to validate the effectiveness of the mask and prints results
+"""
+def test_pre_processed(control_image_path, clean_b_path, dirty_b_path):
+    # show the images
+    cv2.imshow("Control Image", cv2.imread(control_image_path))
+    cv2.imshow("Clean Image B", cv2.imread(clean_b_path))
+    cv2.imshow("Dirty Image B", cv2.imread(dirty_b_path))
+
+    # get and print distances (run the recognition algorithm)
+    clean_distance = validate_screwup(control_image_path, clean_b_path)
+    dirty_distance = validate_screwup(control_image_path, dirty_b_path)
+
+    # print results
+    print(f"Distance between control and clean B: {clean_distance}")
+    print(f"Distance between control and dirty B: {dirty_distance}")
+
+    # destroy CV results
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 def main():
     # paths for test images
