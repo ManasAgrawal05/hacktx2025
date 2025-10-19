@@ -169,7 +169,7 @@ def train(
 
     # --- Data ---
     # Keep default parameters for dataloaders (as requested)
-    train_loader, _ = build_dataloaders(root_dir)
+    train_loader, val_loader = build_dataloaders(root_dir)
 
     # --- Model ---
     model = load_facenet_from_hf(device=device, repo_id=repo_id, filename=filename)
@@ -255,6 +255,32 @@ def train(
                 })
 
                 history_rows.append((epoch, step, float(loss.item()), float(mean_dist.item())))
+
+            # --- Validation ---
+            val_loss = 0.0
+            val_dist = 0.0
+            val_steps = 0
+            with torch.no_grad():
+                for imgs, _persons in tqdm(val_loader, desc="Validating", ncols=120, leave=False):
+                    imgs = imgs.to(device).float()
+                    e_clean = model(preprocess_for_facenet(imgs))
+                    noise = bounded_noise(noise_raw, epsilon)
+                    noise_resized = F.interpolate(
+                        noise.unsqueeze(0), size=imgs.shape[-2:], mode="bilinear", align_corners=False
+                    ).squeeze(0)
+                    noise_batch = noise_resized.unsqueeze(0).expand(imgs.size(0), -1, -1, -1)
+                    imgs_noised = torch.clamp(imgs + noise_batch, 0.0, 1.0)
+                    e_noised = model(preprocess_for_facenet(imgs_noised))
+
+                    dist = torch.norm(e_clean - e_noised, dim=1)
+                    val_dist += dist.mean().item()
+                    val_steps += 1
+
+            val_avg_dist = val_dist / val_steps
+            print(f"[val] Epoch {epoch}: mean distance = {val_avg_dist:.4f}")
+
+            # Add to history (we’ll mark validation rows with step=0)
+            history_rows.append((epoch, 0, float('nan'), float(val_avg_dist)))
 
             # --- Save checkpoint each epoch ---
             # Save BOTH the raw param and a bounded snapshot for convenience
