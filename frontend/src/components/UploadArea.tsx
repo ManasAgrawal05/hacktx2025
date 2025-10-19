@@ -13,17 +13,14 @@ export default function UploadArea({ onUpload }: Props): JSX.Element {
   const handleClick = () => inputRef.current?.click()
 
   return (
-    <div className="upload-area center-card">
-      <h2>Ready for upload</h2>
-      <p className="muted">Point your camera, or upload an image to test the obfuscation.</p>
+    <div className="upload-area-circle">
+      
+      <div className="upload-content">
+        <h2>Ready for upload</h2>
+        <p className="muted">Point your camera, or upload an image to test the obfuscation.</p>
 
-      <div style={{ marginTop: 14 }}>
         <button className="primary-btn" onClick={handleClick}>Upload Image</button>
         <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
-      </div>
-
-      <div className="cosmic-hint">
-        <p>Or drop an image here (drag & drop coming soon)</p>
       </div>
     </div>
   )
