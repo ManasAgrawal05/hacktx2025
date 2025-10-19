@@ -1,8 +1,7 @@
 import socketio
 
-# ===== Configuration =====
-TUNNEL_URL = "https://orange-composer-cancer-peripheral.trycloudflare.com"
-# ==========================
+# Change to your Pi's public or tunnel URL
+SERVER_URL = "https://orange-composer-cancer-peripheral.trycloudflare.com"
 
 sio = socketio.Client()
 
@@ -23,19 +22,19 @@ def on_server_message(data):
 
 
 def main():
-    print("🌐 Connecting to server...")
-    sio.connect(TUNNEL_URL, transports=['websocket'])
+    print("🌐 Connecting to Raspberry Pi server...")
+    sio.connect(SERVER_URL, transports=['websocket'])
 
     try:
         while True:
-            input("🔘 Press Enter to send 'take_picture' command...")
+            input("🔘 Press Enter to send 'take_picture' signal...")
             sio.emit('take_picture', {'msg': 'take_picture'})
-            print("📤 Sent 'take_picture' command")
+            print("📤 Sent 'take_picture' signal")
     except KeyboardInterrupt:
         print("\n👋 Exiting...")
     finally:
         sio.disconnect()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -1,41 +1,50 @@
-from flask import Flask
-from flask_socketio import SocketIO, emit
-import subprocess
+import socketio
 import threading
-import os
+import subprocess
 
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
-
-
-@app.route('/')
-def index():
-    return "Simple take-picture server running."
+# Create Socket.IO server (threading mode = no async or SSL issues)
+sio = socketio.Server(async_mode='threading')
+app = socketio.WSGIApp(sio)
 
 
-@socketio.on('connect')
-def handle_connect():
-    print("✅ Client connected")
-    emit('server_message', {'msg': 'Connected to simple receiver'})
+@sio.event
+def connect(sid, environ):
+    print(f"✅ Client connected: {sid}")
+    sio.emit('server_message', {'msg': 'Connected to Raspberry Pi'}, to=sid)
 
 
-@socketio.on('take_picture')
-def handle_take_picture(data):
-    print("📸 Received take_picture signal:", data)
-    emit('server_message', {'msg': 'Taking picture...'})
+@sio.event
+def disconnect(sid):
+    print(f"❌ Client disconnected: {sid}")
+
+
+@sio.on('take_picture')
+def handle_take_picture(sid, data):
+    print(f"📸 Received take_picture signal from {sid}: {data}")
+    sio.emit('server_message', {'msg': 'Taking picture...'}, to=sid)
 
     def worker():
         try:
             print("▶️ Running raspberryRunner.py...")
-            subprocess.run(["~/env/bin/python", "raspberryRunner.py"], shell=True, check=True)
-            socketio.emit('server_message', {'msg': 'Picture taken successfully!'})
+            subprocess.run(
+                ["~/env/bin/python", "raspberryRunner.py"],
+                shell=True,
+                check=True
+            )
+            print("✅ Picture taken successfully!")
+            sio.emit('server_message', {'msg': 'Picture taken successfully!'}, to=sid)
         except subprocess.CalledProcessError as e:
-            print("❌ Error:", e)
-            socketio.emit('server_message', {'msg': f"Failed: {e}"})
+            print("❌ Error running script:", e)
+            sio.emit('server_message', {'msg': f'Error: {e}'}, to=sid)
 
-    # Run in background so server stays responsive
+    # Run command in background so server remains responsive
     threading.Thread(target=worker, daemon=True).start()
 
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8889)
+    import wsgiref.simple_server
+
+    port = 8888
+    print(f"🚀 Raspberry Pi receiver listening on port {port} ...")
+    server = wsgiref.simple_server.make_server('0.0.0.0', port, app)
+    server.serve_forever()
