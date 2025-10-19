@@ -1,41 +1,41 @@
-import socketio
+from flask import Flask
+from flask_socketio import SocketIO, emit
+import subprocess
+import threading
+import os
 
-# ===== Configuration =====
-TUNNEL_URL = "https://orange-composer-cancer-peripheral.trycloudflare.com"
-# ==========================
-
-sio = socketio.Client()
-
-
-@sio.event
-def connect():
-    print("✅ Connected to server")
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 
-@sio.event
-def disconnect():
-    print("❌ Disconnected from server")
+@app.route('/')
+def index():
+    return "Simple take-picture server running."
 
 
-@sio.on('server_message')
-def on_server_message(data):
-    print("📨 Server:", data.get('msg'))
+@socketio.on('connect')
+def handle_connect():
+    print("✅ Client connected")
+    emit('server_message', {'msg': 'Connected to simple receiver'})
 
 
-def main():
-    print("🌐 Connecting to server...")
-    sio.connect(TUNNEL_URL, transports=['websocket'])
+@socketio.on('take_picture')
+def handle_take_picture(data):
+    print("📸 Received take_picture signal:", data)
+    emit('server_message', {'msg': 'Taking picture...'})
 
-    try:
-        while True:
-            input("🔘 Press Enter to send 'take_picture' command...")
-            sio.emit('take_picture', {'msg': 'take_picture'})
-            print("📤 Sent 'take_picture' command")
-    except KeyboardInterrupt:
-        print("\n👋 Exiting...")
-    finally:
-        sio.disconnect()
+    def worker():
+        try:
+            print("▶️ Running raspberryRunner.py...")
+            subprocess.run(["~/env/bin/python", "raspberryRunner.py"], shell=True, check=True)
+            socketio.emit('server_message', {'msg': 'Picture taken successfully!'})
+        except subprocess.CalledProcessError as e:
+            print("❌ Error:", e)
+            socketio.emit('server_message', {'msg': f"Failed: {e}"})
+
+    # Run in background so server stays responsive
+    threading.Thread(target=worker, daemon=True).start()
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=8888)
