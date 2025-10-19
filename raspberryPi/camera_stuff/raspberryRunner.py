@@ -9,18 +9,23 @@ import io
 import keyboard
 
 # take an image and store as a jpeg
-
-
-def capture_and_process_image():
+def capture_image():
     camera = Camera()
     jpeg_bytes = camera.capture_image()
+    return jpeg_bytes
+
+# process the image
+def process_image(jpeg_bytes):
+    camera = Camera()
     processed_jpeg = camera.process_image(jpeg_bytes)
     processed_image = Image.open(io.BytesIO(processed_jpeg))
     return processed_image
 
+# take an image and store as a jpeg
+def capture_and_process_image():
+    return process_image(capture_image())
+
 # save a clean version of the image
-
-
 def save_clean_image(clean_path, jpeg):
     masker_instance = Masker()
 
@@ -54,12 +59,18 @@ def main():
         elif keyboard.is_pressed(' '):
             print("Executing program...")
             # get and save the anchor image
-            anchor = capture_and_process_image()
+            anchor_large = capture_image()
+            # save the main anchor image
+            save_clean_image("../../wormhole/send_images/anchor_un_processed.jpg", anchor)
+            anchor = process_image(anchor_large)
             save_clean_image("../../wormhole/send_images/anchor.jpg", anchor)
             time.sleep(2)
 
             # get image b
-            image_b = capture_and_process_image()
+            image_b_large = capture_image()
+            # save the large image b
+            save_clean_image("../../wormhole/send_images/test_un_processed.jpg", image_b_large)
+            image_b = process_image(image_b_large)
             save_clean_image("../../wormhole/send_images/negative.jpg", image_b)
             time.sleep(2)
             save_dirty_image("../../wormhole/send_images/positive.jpg", image_b)
