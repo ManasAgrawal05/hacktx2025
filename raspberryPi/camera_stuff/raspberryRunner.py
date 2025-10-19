@@ -6,6 +6,7 @@ from camera_stuff import Camera
 from PIL import Image
 import time
 import io
+import keyboard
 
 # take an image and store as a jpeg
 
@@ -41,18 +42,29 @@ def save_dirty_image(dirty_path, jpeg):
 # get and save an anchor image + a clean and dirty image b
 
 
+# get and save an anchor image + a clean and dirty image b
 def main():
-    # get and save the anchor image
-    anchor = capture_and_process_image()
-    save_clean_image("../../wormhole/send_images/anchor.jpg", anchor)
-    time.sleep(2)
+    while(True):
+        # q for quit
+        if keyboard.is_pressed('q'):
+            print("Exiting...")
+            break
 
-    # get image b
-    image_b = capture_and_process_image()
-    save_clean_image("../../wormhole/send_images/negative.jpg", image_b)
-    time.sleep(2)
-    save_dirty_image("../../wormhole/send_images/positive.jpg", image_b)
+        # space runs the capture system
+        elif keyboard.is_pressed(' '):
+            print("Executing program...")
+            # get and save the anchor image
+            anchor = capture_and_process_image()
+            save_clean_image("../../wormhole/send_images/anchor.jpg", anchor)
+            time.sleep(2)
 
+            # get image b
+            image_b = capture_and_process_image()
+            save_clean_image("../../wormhole/send_images/negative.jpg", image_b)
+            time.sleep(2)
+            save_dirty_image("../../wormhole/send_images/positive.jpg", image_b)
+
+main()
 
 if __name__ == '__main__':
     main()
