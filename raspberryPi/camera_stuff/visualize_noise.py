@@ -36,7 +36,7 @@ def make_overlay(base_img, noise_tensor, epsilon):
     noise_resized = noise_resized.squeeze(0)
 
     # Apply noise scaled by epsilon
-    perturbed = img_tensor + (epsilon * noise_resized)
+    perturbed = img_tensor + (noise_resized)
 
     # Clamp to valid range [0, 1]
     perturbed = torch.clamp(perturbed, 0, 1)
