@@ -1,1 +1,0 @@
-"""Code to test the camera / image display stuff"""
