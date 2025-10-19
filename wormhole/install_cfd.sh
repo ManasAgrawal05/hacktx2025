@@ -1,11 +1,17 @@
-# 1️⃣ Add Cloudflare GPG key
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+#!/bin/bash
+set -e
 
-# 2️⃣ Add the Cloudflare package repository
-echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ $(lsb_release -cs) main" \
-| sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ]; then
+  FILE="cloudflared-linux-arm64.deb"
+elif [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "armhf" ]; then
+  FILE="cloudflared-linux-armhf.deb"
+else
+  echo "Unsupported architecture: $ARCH"
+  exit 1
+fi
 
-# 3️⃣ Update and install
-sudo apt update
-sudo apt install cloudflared -y
+wget "https://github.com/cloudflare/cloudflared/releases/latest/download/$FILE" -O cloudflared.deb
+sudo dpkg -i cloudflared.deb || sudo apt -f install -y
+cloudflared --version
 
